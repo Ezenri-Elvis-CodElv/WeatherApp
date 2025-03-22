@@ -2,18 +2,35 @@ import React, { useState } from "react";
 import { MdDarkMode, MdOutlineLightMode } from "react-icons/md";
 import ClipLoader from "react-spinners/ClipLoader";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Searchweather = () => {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [error, setError] = useState(null);
+  const [weather, setWeather] = useState(null);
+  const [city, setCity] = useState("");
   const nav = useNavigate();
 
-  const fetchWeather = () => {
+  const getWeather = async (e) => {
+    e.preventDefault();
+    if (!city.trim()) {
+      setError("Please enter a city name");
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await axios.get(
+        `https://weather-update-p3ap.onrender.com/weather?city=${city}`
+      );
+      setWeather(res.data.data);
       setLoading(false);
-      nav("/weather");
-    }, 3000); // Simulate API call
+      nav("/weather", { state: { weather: res.data.data } });
+      console.log(res)
+    } catch (err) {
+      setError("Failed to fetch weather data");
+      setLoading(false);
+    }
   };
 
   return (
@@ -41,19 +58,22 @@ const Searchweather = () => {
           darkMode ? "bg-gray-800 text-white" : "bg-white text-black"
         }`}
       >
-        <div className="flex items-center gap-2 w-[60%] h-[25%] mb-4">
+        <form onSubmit={getWeather} className="flex items-center gap-2 w-[60%] h-[25%] mb-4">
           <input
             type="text"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
             className="w-[70%] h-full border border-gray-400 rounded-md px-4 py-3 focus:outline-none shadow-md"
-            placeholder="Input Location"
+            placeholder="Enter City"
           />
           <button
-            onClick={fetchWeather}
+            type="submit"
             className="bg-blue-700 text-white px-6 py-3 rounded-md hover:bg-blue-800 shadow-md transition-all duration-200"
           >
             Search
           </button>
-        </div>
+        </form>
+        {error && <p className="text-red-500">{error}</p>}
       </div>
     </div>
   );
